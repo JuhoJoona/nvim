@@ -23,18 +23,15 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
     {
-        'rebelot/kanagawa.nvim',
+        'folke/tokyonight.nvim',
         priority = 1000, -- Load before other plugins
         config = function()
-            require('kanagawa').setup({
-                -- Optional: customize theme
-                -- theme = "wave",    -- "wave", "dragon", "lotus"
-                -- background = {
-                --     dark = "wave",
-                --     light = "lotus"
-                -- },
+            require('tokyonight').setup({
+                style = 'night', -- 'storm', 'night', 'moon', 'day'
+                transparent = false,
+                terminal_colors = true,
             })
-            vim.cmd('colorscheme kanagawa')
+            vim.cmd('colorscheme tokyonight-night')
         end
     },
     {
@@ -75,19 +72,57 @@ require("lazy").setup({
         end
     },
     {
-        'echasnovski/mini.files',
+        'nvim-tree/nvim-web-devicons',
+        priority = 100,
+    },
+    {
+        'nvim-tree/nvim-tree.lua',
         version = '*',
+        dependencies = {
+            'nvim-tree/nvim-web-devicons',
+        },
         config = function()
-            require('mini.files').setup()
-            
-            -- Toggle mini.files
-            vim.keymap.set('n', '<leader>e', function()
-                require('mini.files').open(vim.api.nvim_buf_get_name(0))
-            end, { desc = 'File explorer (current file)' })
-            
-            vim.keymap.set('n', '<leader>E', function()
-                require('mini.files').open()
-            end, { desc = 'File explorer (cwd)' })
+            require('nvim-web-devicons').setup()
+
+            require('nvim-tree').setup({
+                renderer = {
+                    icons = {
+                        show = {
+                            file = true,
+                            folder = true,
+                            folder_arrow = true,
+                            git = true,
+                        },
+                        glyphs = {
+                            folder = {
+                                arrow_closed = "▶",
+                                arrow_open = "▼",
+                            },
+                        },
+                    },
+                    indent_markers = {
+                        enable = true,
+                    },
+                },
+                view = {
+                    side = 'left',
+                    width = 30,
+                },
+                git = {
+                    enable = true,
+                },
+            })
+
+            -- Toggle nvim-tree
+            vim.keymap.set('n', '<leader>e', ':NvimTreeToggle<CR>', { desc = 'Toggle file explorer' })
+            vim.keymap.set('n', '<leader>E', ':NvimTreeFindFile<CR>', { desc = 'Find current file in tree' })
+
+            -- Navigate between sidebar and editor with Ctrl+h and Ctrl+l
+            vim.keymap.set('n', '<C-h>', function()
+                require('nvim-tree.api').tree.focus()
+            end, { desc = 'Focus on file explorer' })
+
+            vim.keymap.set('n', '<C-l>', '<C-w>l', { desc = 'Focus on editor' })
         end
     },
      {
@@ -161,6 +196,47 @@ require("lazy").setup({
         event = { "VeryLazy" },
         config = function()
             require("ibl").setup()
+        end,
+    },
+    {
+        "https://github.com/folke/which-key.nvim",
+        event = "VeryLazy",
+        config = function()
+            require("which-key").setup({
+                preset = "modern",
+                delay = 200, -- delay in ms for showing the which-key popup
+            })
+        end,
+    },
+    {
+        'romgrk/barbar.nvim',
+        dependencies = {
+            'nvim-tree/nvim-web-devicons',
+            'lewis6991/gitsigns.nvim',
+        },
+        init = function()
+            vim.g.barbar_auto_setup = false
+        end,
+        config = function()
+            require('barbar').setup({
+                animation = true,
+                auto_hide = false,
+                tabpages = true,
+                clickable = true,
+            })
+
+            -- Quick buffer navigation
+            vim.keymap.set('n', '<Tab>', ':BufferNext<CR>', { noremap = true, silent = true, desc = 'Next buffer' })
+            vim.keymap.set('n', '<S-Tab>', ':BufferPrevious<CR>', { noremap = true, silent = true, desc = 'Previous buffer' })
+            vim.keymap.set('n', '<leader>bc', ':BufferClose<CR>', { noremap = true, silent = true, desc = 'Close buffer' })
+            vim.keymap.set('n', '<leader>ba', ':BufferCloseAllButCurrent<CR>', { noremap = true, silent = true, desc = 'Close all but current' })
+        end,
+    },
+    {
+        'lewis6991/gitsigns.nvim',
+        event = "VeryLazy",
+        config = function()
+            require('gitsigns').setup()
         end,
     },
 
