@@ -145,20 +145,22 @@ require("lazy").setup({
     },
         {
         "https://github.com/VonHeikemen/lsp-zero.nvim",
+        branch = "v4.x",
         dependencies = {
             "https://github.com/williamboman/mason.nvim",
             "https://github.com/williamboman/mason-lspconfig.nvim",
             "https://github.com/neovim/nvim-lspconfig",
             "https://github.com/hrsh7th/cmp-nvim-lsp",
-            "https://github.com/hrsh7th/nvim-cmp",
-            "https://github.com/L3MON4D3/LuaSnip",
         },
         config = function()
             local lsp_zero = require('lsp-zero')
 
-            lsp_zero.on_attach(function(client, bufnr)
-                lsp_zero.default_keymaps({buffer = bufnr})
-            end)
+            lsp_zero.extend_lspconfig({
+                capabilities = require('cmp_nvim_lsp').default_capabilities(),
+                lsp_attach = function(client, bufnr)
+                    lsp_zero.default_keymaps({ buffer = bufnr })
+                end,
+            })
 
             require("mason").setup()
             require("mason-lspconfig").setup({
@@ -168,10 +170,67 @@ require("lazy").setup({
                     "rust_analyzer", -- Rust
                     "ts_ls",
                     "volar",
+                    "clangd", -- C/C++
                 },
-                handlers = {
-                    lsp_zero.default_setup,
+            })
+        end,
+    },
+    {
+        "https://github.com/hrsh7th/nvim-cmp",
+        event = "InsertEnter",
+        dependencies = {
+            "https://github.com/hrsh7th/cmp-nvim-lsp",
+            "https://github.com/hrsh7th/cmp-buffer",
+            "https://github.com/hrsh7th/cmp-path",
+            "https://github.com/L3MON4D3/LuaSnip",
+            "https://github.com/saadparwaiz1/cmp_luasnip",
+        },
+        config = function()
+            local cmp = require("cmp")
+            local luasnip = require("luasnip")
+
+            cmp.setup({
+                snippet = {
+                    expand = function(args)
+                        luasnip.lsp_expand(args.body)
+                    end,
                 },
+                window = {
+                    completion = cmp.config.window.bordered(),
+                    documentation = cmp.config.window.bordered(),
+                },
+                mapping = cmp.mapping.preset.insert({
+                    ["<C-b>"] = cmp.mapping.scroll_docs(-4),
+                    ["<C-f>"] = cmp.mapping.scroll_docs(4),
+                    ["<C-Space>"] = cmp.mapping.complete(),
+                    ["<C-e>"] = cmp.mapping.abort(),
+                    ["<CR>"] = cmp.mapping.confirm({ select = false }),
+                    ["<Tab>"] = cmp.mapping(function(fallback)
+                        if cmp.visible() then
+                            cmp.select_next_item()
+                        elseif luasnip.expand_or_jumpable() then
+                            luasnip.expand_or_jump()
+                        else
+                            fallback()
+                        end
+                    end, { "i", "s" }),
+                    ["<S-Tab>"] = cmp.mapping(function(fallback)
+                        if cmp.visible() then
+                            cmp.select_prev_item()
+                        elseif luasnip.jumpable(-1) then
+                            luasnip.jump(-1)
+                        else
+                            fallback()
+                        end
+                    end, { "i", "s" }),
+                }),
+                sources = cmp.config.sources({
+                    { name = "nvim_lsp" },
+                    { name = "luasnip" },
+                }, {
+                    { name = "buffer" },
+                    { name = "path" },
+                }),
             })
         end,
     },
