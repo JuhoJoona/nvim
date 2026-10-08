@@ -171,7 +171,26 @@ require("lazy").setup({
                     "ts_ls",
                     "volar",
                     "clangd", -- C/C++
+                    "terraformls", -- Terraform
                 },
+            })
+
+            -- Format Terraform on save via terraform-ls
+            vim.api.nvim_create_autocmd("BufWritePre", {
+                pattern = { "*.tf", "*.tfvars" },
+                callback = function() vim.lsp.buf.format() end,
+            })
+        end,
+    },
+    {
+        "https://github.com/mfussenegger/nvim-lint",
+        event = { "BufReadPost", "BufNewFile" },
+        config = function()
+            require("lint").linters_by_ft = {
+                terraform = { "tflint" },
+            }
+            vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
+                callback = function() require("lint").try_lint() end,
             })
         end,
     },
@@ -296,6 +315,18 @@ require("lazy").setup({
         event = "VeryLazy",
         config = function()
             require('gitsigns').setup()
+        end,
+    },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        ft = { 'markdown' },
+        dependencies = {
+            'nvim-tree/nvim-web-devicons',
+        },
+        config = function()
+            require('render-markdown').setup({})
+
+            vim.keymap.set('n', '<leader>mp', ':RenderMarkdown toggle<CR>', { silent = true, desc = 'Toggle markdown rendering' })
         end,
     },
 
