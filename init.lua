@@ -8,6 +8,16 @@ vim.opt.expandtab = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 0
 
+vim.keymap.set('i', 'jk', '<Esc>', { desc = 'Exit insert mode' })
+vim.keymap.set('i', 'jj', '<Esc>', { desc = 'Exit insert mode' })
+
+-- Leader shortcuts so you rarely need to type ':'
+vim.keymap.set('n', '<leader><leader>', ':', { desc = 'Command line' })
+vim.keymap.set('n', '<leader>w', '<cmd>w<CR>', { desc = 'Save' })
+vim.keymap.set('n', '<leader>q', '<cmd>q<CR>', { desc = 'Quit window' })
+vim.keymap.set('n', '<leader>x', '<cmd>x<CR>', { desc = 'Save and quit' })
+vim.keymap.set('n', '<leader>Q', '<cmd>qa<CR>', { desc = 'Quit all' })
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
     vim.fn.system({
@@ -318,16 +328,35 @@ require("lazy").setup({
         end,
     },
     {
+        'nvim-treesitter/nvim-treesitter',
+        branch = 'main',
+        lazy = false, -- Plugin doesn't support lazy loading
+        build = ':TSUpdate',
+        config = function()
+            require('nvim-treesitter').install({
+                'python', 'rust', 'javascript', 'typescript', 'tsx', 'vue',
+                'c', 'cpp', 'lua', 'bash', 'json', 'yaml', 'toml',
+                'html', 'css', 'markdown', 'markdown_inline', 'vim', 'vimdoc',
+            })
+
+            -- Enable highlighting and indentation for any filetype with a parser
+            vim.api.nvim_create_autocmd('FileType', {
+                callback = function(args)
+                    if pcall(vim.treesitter.start, args.buf) then
+                        vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+                    end
+                end,
+            })
+        end,
+    },
+    {
         'MeanderingProgrammer/render-markdown.nvim',
         ft = { 'markdown' },
-        dependencies = {
-            'nvim-tree/nvim-web-devicons',
+        dependencies = { 'nvim-tree/nvim-web-devicons' },
+        opts = {},
+        keys = {
+            { '<leader>mr', '<cmd>RenderMarkdown toggle<CR>', desc = 'Toggle markdown rendering' },
         },
-        config = function()
-            require('render-markdown').setup({})
-
-            vim.keymap.set('n', '<leader>mp', ':RenderMarkdown toggle<CR>', { silent = true, desc = 'Toggle markdown rendering' })
-        end,
     },
 
 
